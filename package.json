@@ -1,0 +1,30 @@
+{
+  "name": "smartapis",
+  "version": "1.0.0",
+  "description": "Apis de Inteligencia Artificial",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon app.js"
+  },
+  "author": "Pedro A. Alemán Morado",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/vision": "^4.0.2",
+    "bcrypt-nodejs": "^0.0.3",
+    "body-parser": "^1.20.2",
+    "chalk": "^5.3.0",
+    "connect-multiparty": "^2.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "jwt-simple": "^0.5.6",
+    "mime-db": "^1.52.0",
+    "moment": "^2.30.1",
+    "openai": "^4.24.7",
+    "ora": "^8.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
