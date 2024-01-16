@@ -1,4 +1,13 @@
 require('dotenv').config();
+const generic = require('../shared/generic');
+
+// Imports the Google Cloud client library
+const {Translate} = require('@google-cloud/translate').v2;
+
+// Creates a client de Translate
+const translate = new Translate()
+//const text = 'The text to translate, e.g. Hello, world!';
+const target = 'es';
 
 
 // Establece la variable de entorno GOOGLE_APPLICATION_CREDENTIALS con la ruta al archivo JSON de la cuenta de servicio.
@@ -7,11 +16,35 @@ process.env.GOOGLE_APPLICATION_CREDENTIALS = './cuentasmart.json'//path.join(__d
 
 // Imports the Google Cloud client library
 const vision = require('@google-cloud/vision');
+const fs = require('fs');
 const client = new vision.ImageAnnotatorClient();
 const fileName = './images/SorentoFrente.jpg';
+//const fileName = './images/300653.png';
 
 const { OpenAIAPI } = require('openai');
 //const apiKey = process.env.OPENAI_API_KEY  //Es la api de chat gpt
+
+async function translateText(text) {
+    //console.log('entra a traducir: ',text)
+    // Translates the text into the target language. "text" can be a string for
+    // translating a single piece of text, or an array of strings for translating
+    // multiple texts.
+    let [translations] = await translate.translate(text, target);
+    translations = Array.isArray(translations) ? translations : [translations];
+    const arrObjetos = translations.map(translation => translation);
+    let cadenaObjetos = arrObjetos.join();
+    // console.log('Translations:'),translations;
+    // translations.forEach((translation, i) => {
+    //   console.log(`${text[i]} => (${target}) ${translation}`);
+    // });
+
+    //console.log('Haber: ', cadenaObjetos)
+
+    
+    let sinAcentos = generic.quitarAcentos(cadenaObjetos);
+
+    return sinAcentos.toLowerCase();
+  }
 
 async function getProperties(req, res){
     //let lst = [];
@@ -27,97 +60,75 @@ async function getProperties(req, res){
         //     lst.push(obj);
         // });
 
+        const request = {
+            image: {content: fs.readFileSync(fileName)},
+          };
+
+          const [result] = await client.objectLocalization(request);
+          const objects = result.localizedObjectAnnotations;
+          const arrObjetos = objects.map(objeto => objeto.name);
+          let cadenaObjetos = arrObjetos.join();
+          let traduccion = await translateText(cadenaObjetos);
+
+        //   objects.forEach(object => {
+        //     console.log(`Name: ${object.name}`);
+        //     console.log(`Confidence: ${object.score}`);
+        //     const vertices = object.boundingPoly.normalizedVertices;
+        //     vertices.forEach(v => console.log(`x: ${v.x}, y:${v.y}`));
+        //   });
+
+//*******SI FUNCIONA, PERO ES EL QUE SACA ETIQUETAS, NO LO OCUPO YO */
+/*
         // Performs label detection on the image file
         const [resultLabels] = await client.labelDetection(fileName);
-        const labels = resultLabels.labelAnnotations;
-        console.log('Labels:');
+        const labels = resultLabels.labelAnnotations;        
+        console.log('Labels: ');
 
         const annotations = labels.map(annotation => annotation.description);
-        //console.log('annotations: ',annotations)
+        let cadena = annotations.join();
+        console.log('annotations: cadena: ',cadena)
+        translateText(cadena);   
+*/
 
-        annotations.forEach((etiqueta, index) => {
-            //console.log('etiqueta: ',etiqueta)
-            //console.log(annotations[index], ' : ', translation.text);
+          if(traduccion.includes('matricula') || traduccion.includes('placa') ){
+            //Obtener el texto
+            console.log('Detectar texto: ')
 
-            const prompt = `Actua como un traductor profesional de ingles a español. ¿Que significa ${etiqueta}?`;
-            const myAssistant  = async (prompt) => {
-                try {
-                  const openai = new OpenAI({
-                    apiKey: process.env.OPEN_AI_API_KEY,
-                  });
+            // Read a local image as a text document
+            const [result] = await client.documentTextDetection(fileName);
+            const fullTextAnnotation = result.fullTextAnnotation;
+            //console.log(`Full text: ${fullTextAnnotation.text}`);
+            let placa = /[A-Z]{3}-\d{3,4}-\w/;
+            console.log('Placa: ',placa)
+            //REGULAR:  [A-Z]{3}-\d{3,4}-\w
 
-                  openai.complete({
-                    engine: 'text-davinci-003', // Puedes ajustar el motor según tus necesidades
-                    prompt: prompt,
-                    max_tokens: 150, // Puedes ajustar la longitud máxima de la respuesta
-                    })
-                .then(response => {
-                    const answer = response.data.choices[0].text.trim();
-                    console.log('Respuesta:', answer);
-                })
-                .catch(error => console.error('Error al llamar a la API de OpenAI:', error));
-
-
-                 return true;
-                } catch (err) {
-                  console.error("Error in chat bot =====>", err);
-                }
-              };
-
-
-         /*    const prompt = `Actua como un traductor profesional de ingles a español. ¿Que significa ${etiqueta}?`;
-            const openai = new OpenAIAPI({ key: apiKey });
-
-            openai.complete({
-                engine: 'text-davinci-003', // Puedes ajustar el motor según tus necesidades
-                prompt: prompt,
-                max_tokens: 150, // Puedes ajustar la longitud máxima de la respuesta
-                })
-            .then(response => {
-                const answer = response.data.choices[0].text.trim();
-                console.log('Respuesta:', answer);
-            })
-            .catch(error => console.error('Error al llamar a la API de OpenAI:', error)); */
+            /*fullTextAnnotation.pages.forEach(page => {
+             page.blocks.forEach(block => {
+                console.log(`Block confidence: ${block.confidence}`);
+                block.paragraphs.forEach(paragraph => {
+                console.log(`Paragraph confidence: ${paragraph.confidence}`);
+                paragraph.words.forEach(word => {
+                    const wordText = word.symbols.map(s => s.text).join('');
+                    console.log(`Word text: ${wordText}`);
+                    console.log(`Word confidence: ${word.confidence}`);
+                    word.symbols.forEach(symbol => {
+                    console.log(`Symbol text: ${symbol.text}`);
+                    console.log(`Symbol confidence: ${symbol.confidence}`);
+                    });
+                });
+                });
+            }); 
+        });*/
 
 
-        });
+          }
 
-      
-
-        /*
-            // Traduce las etiquetas al español.
-            translate(annotations, { to: 'es' })
-            .then((translations) => {
-            console.log('Etiquetas en español:');
-            translations.forEach((translation, index) => {
-                console.log(annotations[index], ' : ', translation.text);
-            });
-            })
-            .catch((err) => {
-            console.error('Error al traducir:', err);
-            });
-        */
-
-        // labels.forEach(label => {            
-        //     //console.log(label.description)
-        //     let obj = { tipo: 'Labels',result: label.description };
-        //     lst.push(obj);
-        // });
-
-        // process.on('unhandledRejection', err => {
-        //     console.error(err.message);
-        //     process.exitCode = 1;
-        // });
-
-        //console.log(lst)
-
-        res.status(200).send({success: true, message: annotations});
-    } catch (error) {
-        console.log('Error Api Visión de Google: ', error)
-        res.status(500).send({success: false, message: error});
+        res.status(200).send({success: true, message: traduccion, result: null});
     } 
-
-   
+    catch (error) {
+        console.log('Error Api Visión de Google: ', error)
+        res.status(500).send({success: false, message: error, result: null});
+    } 
 }
 
 module.exports = {
