@@ -1,4 +1,4 @@
-Ejemplo en:  https://github.com/pedroaleman/smartapis.git
+Ejemplo en:
 
 1. Abrir visual code
 2. Abrir la ventana de comandos con F1

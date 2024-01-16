@@ -98,8 +98,16 @@ async function getProperties(req, res){
             const [result] = await client.documentTextDetection(fileName);
             const fullTextAnnotation = result.fullTextAnnotation;
             //console.log(`Full text: ${fullTextAnnotation.text}`);
-            let placa = /[A-Z]{3}-\d{3,4}-\w/;
+            //let re = /[A-Z]{3}-\d{3,4}-\w/;
+            let res = fullTextAnnotation.text.match(/[A-Z]{3}-\d{3,4}-\w/gim);
+            if(res != null){
+                placa = res[0];
+            }
+            
+            //console.log(res);
             console.log('Placa: ',placa)
+
+
             //REGULAR:  [A-Z]{3}-\d{3,4}-\w
 
             /*fullTextAnnotation.pages.forEach(page => {
@@ -119,6 +127,7 @@ async function getProperties(req, res){
                 });
             }); 
         });*/
+
 
 
           }
