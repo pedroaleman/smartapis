@@ -1,0 +1,4 @@
+Libreria
+    > npm install @tensorflow/tfjs-node
+    > npm i @tensorflow/tfjs
+

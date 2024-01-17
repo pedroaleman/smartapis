@@ -1,144 +1,105 @@
-require('dotenv').config();
 const generic = require('../shared/generic');
-
-// Imports the Google Cloud client library
-const {Translate} = require('@google-cloud/translate').v2;
-
-// Creates a client de Translate
-const translate = new Translate()
-//const text = 'The text to translate, e.g. Hello, world!';
-const target = 'es';
-
-
-// Establece la variable de entorno GOOGLE_APPLICATION_CREDENTIALS con la ruta al archivo JSON de la cuenta de servicio.
-// Reemplaza '/ruta/a/tu/credencial.json' con la ruta real de tu archivo JSON de credenciales.
-process.env.GOOGLE_APPLICATION_CREDENTIALS = './cuentasmart.json'//path.join(__dirname, '/cuentasmart.json');
-
-// Imports the Google Cloud client library
-const vision = require('@google-cloud/vision');
-const fs = require('fs');
-const client = new vision.ImageAnnotatorClient();
-const fileName = './images/SorentoFrente.jpg';
-//const fileName = './images/300653.png';
-
-const { OpenAIAPI } = require('openai');
-//const apiKey = process.env.OPENAI_API_KEY  //Es la api de chat gpt
-
-async function translateText(text) {
-    //console.log('entra a traducir: ',text)
-    // Translates the text into the target language. "text" can be a string for
-    // translating a single piece of text, or an array of strings for translating
-    // multiple texts.
-    let [translations] = await translate.translate(text, target);
-    translations = Array.isArray(translations) ? translations : [translations];
-    const arrObjetos = translations.map(translation => translation);
-    let cadenaObjetos = arrObjetos.join();
-    // console.log('Translations:'),translations;
-    // translations.forEach((translation, i) => {
-    //   console.log(`${text[i]} => (${target}) ${translation}`);
-    // });
-
-    //console.log('Haber: ', cadenaObjetos)
-
-    
-    let sinAcentos = generic.quitarAcentos(cadenaObjetos);
-
-    return sinAcentos.toLowerCase();
-  }
+const googleService = require('../services/googleApiService')
+const tensorService = require('../services/tensorFlowService');
+const tf = require("@tensorflow/tfjs")
+require('@tensorflow/tfjs-node')
 
 async function getProperties(req, res){
-    //let lst = [];
+  const fileName = './images/SorentoFrente.jpg';
+  //const fileName = './images/sorentolateral.jpg';
+  //const fileName = './images/300653.png';
+  //const fileName = './images/camionbasura.jpeg';
 
     try {
-        // const [result] = await client.textDetection(fileName);
-        // const detections = result.textAnnotations;
-        // //console.log('Text:',detections[0].description);
-        // console.log('Text:');        
-        // detections.forEach(text => {
-        //     //console.log(text)
-        //     let obj = { tipo: 'Text',result: text };
-        //     lst.push(obj);
-        // });
+      tensorService.classifyImage(fileName);
 
-        const request = {
-            image: {content: fs.readFileSync(fileName)},
-          };
-
-          const [result] = await client.objectLocalization(request);
-          const objects = result.localizedObjectAnnotations;
-          const arrObjetos = objects.map(objeto => objeto.name);
-          let cadenaObjetos = arrObjetos.join();
-          let traduccion = await translateText(cadenaObjetos);
-
-        //   objects.forEach(object => {
-        //     console.log(`Name: ${object.name}`);
-        //     console.log(`Confidence: ${object.score}`);
-        //     const vertices = object.boundingPoly.normalizedVertices;
-        //     vertices.forEach(v => console.log(`x: ${v.x}, y:${v.y}`));
-        //   });
-
-//*******SI FUNCIONA, PERO ES EL QUE SACA ETIQUETAS, NO LO OCUPO YO */
-/*
-        // Performs label detection on the image file
-        const [resultLabels] = await client.labelDetection(fileName);
-        const labels = resultLabels.labelAnnotations;        
-        console.log('Labels: ');
-
-        const annotations = labels.map(annotation => annotation.description);
-        let cadena = annotations.join();
-        console.log('annotations: cadena: ',cadena)
-        translateText(cadena);   
-*/
-
-          if(traduccion.includes('matricula') || traduccion.includes('placa') ){
-            //Obtener el texto
-            console.log('Detectar texto: ')
-
-            // Read a local image as a text document
-            const [result] = await client.documentTextDetection(fileName);
-            const fullTextAnnotation = result.fullTextAnnotation;
-            //console.log(`Full text: ${fullTextAnnotation.text}`);
-            //let re = /[A-Z]{3}-\d{3,4}-\w/;
-            let res = fullTextAnnotation.text.match(/[A-Z]{3}-\d{3,4}-\w/gim);
-            if(res != null){
-                placa = res[0];
-            }
-            
-            //console.log(res);
-            console.log('Placa: ',placa)
-
-
-            //REGULAR:  [A-Z]{3}-\d{3,4}-\w
-
-            /*fullTextAnnotation.pages.forEach(page => {
-             page.blocks.forEach(block => {
-                console.log(`Block confidence: ${block.confidence}`);
-                block.paragraphs.forEach(paragraph => {
-                console.log(`Paragraph confidence: ${paragraph.confidence}`);
-                paragraph.words.forEach(word => {
-                    const wordText = word.symbols.map(s => s.text).join('');
-                    console.log(`Word text: ${wordText}`);
-                    console.log(`Word confidence: ${word.confidence}`);
-                    word.symbols.forEach(symbol => {
-                    console.log(`Symbol text: ${symbol.text}`);
-                    console.log(`Symbol confidence: ${symbol.confidence}`);
-                    });
-                });
-                });
-            }); 
-        });*/
+      console.log("TensorFlow.js version: ", tf.version.tfjs);
 
 
 
+
+      const arrObjetos = await googleService.getObjects(fileName);      
+      if(arrObjetos == null){
+        res.status(500).send({success: false, message: 'No fue posible procesar imagen', result: null});
+        return;
+      }
+
+      let cadenaObjetos = arrObjetos.join();
+      const objTraduccion = await googleService.translateText(cadenaObjetos);
+      if(objTraduccion == null){
+        res.status(500).send({success: false, message: 'No fue posible traducir objetos detectados', result: null});
+        return;
+      }
+
+      //Quitar acentos y convertir a minísculas
+      let sinAcentos = generic.quitarAcentos(objTraduccion[0]);
+      sinAcentos = sinAcentos.toLowerCase();
+
+      
+      //Si es un vehiculo, validar si trae placas la imagen
+      let vehiculo = {};
+      const listaValores = ["coche", "vehiculo", "camion"];
+      const coincidencias = generic.encontrarValoresEnCadena(sinAcentos, listaValores);
+      if(coincidencias.length > 0){      
+        //console.log('Es vehiculo...', sinAcentos)
+        let re = /coche|vehiculo|camion/gim;
+        let found = sinAcentos.match(re);
+        let nombre = found == null ? null : found[0];
+        vehiculo.nombre = nombre;
+
+
+        //Color del vehiculo
+        const color = await googleService.getColors(fileName);
+        const hex = generic.rgbToHex(color.red,color.green,color.blue);
+
+        //Es si me devuelve algo        
+        const valorRGB = [color.red, color.green, color.blue];        
+        const nombreColor = generic.obtenerNombreColorDesdeRGB(valorRGB,hex);
+        //console.log(`El color es: ${nombreColor}`);
+        
+
+        //Este nunca encuentra el nombre no jala
+        /*
+        const nomColor = generic.NombreColor(hex);
+        vehiculo.color = nomColor;
+        */
+        
+        vehiculo.color = nombreColor;
+
+        //console.log('hex: ',hex,nomColor)
+        // const nombreColor = generic.NombreColor(valorRGB);
+        // console.log(`El color es: ${nombreColor}`);        
+
+        //Obtener la placa
+        const arrPlaca = ["matricula", "placa"];
+        const coincidenciasPlaca = generic.encontrarValoresEnCadena(sinAcentos, arrPlaca);
+        if(coincidenciasPlaca.length > 0){
+          const texto = await googleService.getText(fileName);          
+          let res = texto.match(/[A-Z]{3}-\d{3,4}-\w/gim);
+          if(res != null){
+            placa = res[0];
+            vehiculo.placa = placa;
           }
 
-        res.status(200).send({success: true, message: traduccion, result: null});
-    } 
-    catch (error) {
-        console.log('Error Api Visión de Google: ', error)
-        res.status(500).send({success: false, message: error, result: null});
-    } 
+          //console.log('Placa: ',placa)
+        }
+
+
+      }
+
+      //console.log('sinAcentos: ',sinAcentos)
+      let obj = {success: true, message: 'Proceso Terminado',objects: sinAcentos, vehiculo: vehiculo};
+
+      res.status(200).send(obj);
+    } catch (error) {
+        console.log('Error Google Service: ', error)
+        res.status(500).send({success: false, message: error, objects: null, vehiculo: null});
+    }
+
+
 }
+
+
 
 module.exports = {
 	getProperties
