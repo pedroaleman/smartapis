@@ -9,6 +9,9 @@ const app = express();
 app.use(bodyparser.urlencoded({extended: false}));
 app.use(bodyparser.json());
 
+
+
+
 //app.use("/processimage", apiRoute);
 app.use('/api/1.0', require('./routes'))
 

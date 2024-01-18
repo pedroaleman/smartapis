@@ -11,8 +11,12 @@
   "dependencies": {
     "@google-cloud/translate": "^8.0.3",
     "@google-cloud/vision": "^4.0.2",
+    "@tensorflow-models/mobilenet": "^2.1.1",
     "@tensorflow/tfjs": "^4.16.0",
+    "@tensorflow/tfjs-converter": "^4.16.0",
+    "@tensorflow/tfjs-core": "^4.16.0",
     "@tensorflow/tfjs-node": "^4.16.0",
+    "@tensorflow/tfjs-node-gpu": "^4.16.0",
     "bcrypt-nodejs": "^0.0.3",
     "body-parser": "^1.20.2",
     "chalk": "^5.3.0",

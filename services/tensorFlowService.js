@@ -1,21 +1,73 @@
 const fs = require('fs');
 const path = require('path');
-//const tf = require('@tensorflow/tfjs-node');
-const tf = require("@tensorflow/tfjs")
-require('@tensorflow/tfjs-node')
 
-// Ruta al modelo MobileNet
-const mobilenetModelPath = 'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_1.0_224/model.json';
+const tf = require('@tensorflow/tfjs-node')
+const mobilenet = require('@tensorflow-models/mobilenet');
+const { relativeTimeRounding } = require('moment');
 
-async function loadMobilenetModel() {
-    const mobilenet = await tf.loadGraphModel(mobilenetModelPath);
-    return mobilenet;
-  }
+
+async function decodeImage ( imgPath ) {
+    const imgSrc = fs.readFileSync(imgPath);
+    const arrByte = Uint8Array.from(Buffer.from(imgSrc));
+    return tf.node.decodeImage(arrByte);
+  };
+
 
   async function classifyImage(imagePath) {
-    console.log('Entra a clasificar...', imagePath)
+    //console.log('Entra a clasificar...', imagePath)
+    //console.log("TensorFlow.js version: ", tf.version.tfjs);
 
+    try {        
+        // Load the model.
+        const model = await mobilenet.load();               
+
+        const imageBuffer = await fs.readFileSync(imagePath);
+        const imageArrayBuffer = new Uint8Array(imageBuffer);    
+        const imageTensor = tf.node.decodeImage(imageArrayBuffer);
+        const resizedImage = tf.image.resizeBilinear(imageTensor, [224, 224]);
+        
+        
+
+        const predictions = await model.classify(resizedImage);
+        // console.log('Predictions: ');
+        // console.log(predictions);
+ 
+        // Limpia los recursos
+        imageTensor.dispose();
+
+        let lst = predictions.map(objeto => objeto.className);
+        let cadenaObjetos = lst.join();    
+
+        //console.log('Lista: ',cadenaObjetos)
+        return cadenaObjetos;
+        
+    } catch (error) {
+        console.log('Error: ', error)
+    }
+    finally {
+        //Eliminar imagen
+        
+      }
+
+    return null;
+  
+}
+
+// async function base64Encode(file) {
+//     var body = await fs.readFileSync(file);
+//     return body.toString('base64');
+// }
+
+
+
+
+  async function classifyImage2(imagePath) {
+    console.log('Entra a clasificar...', imagePath)
+    console.log("TensorFlow.js version: ", tf.version.tfjs);
+
+    
     const mobilenet = await loadMobilenetModel();
+    
   
     // Lee la imagen como un tensor
   const imageBuffer = fs.readFileSync(imagePath);
