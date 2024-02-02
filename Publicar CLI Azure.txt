@@ -1,0 +1,9 @@
+Para publicar en producción, en el portal de azuure.
+
+1. Abrir la CLI de azure
+2. Correr los siguientes comandos:
+    > cd C:\GITHUB\Aplicaciones Inteligentes\smartapis\smartapis
+    > az login
+    > az webapp up --resource-group recursos_paytam --name paytamvalidaimagen --location "eastus" --sku "F1" --runtime "NODE|20-lts" --os-type "Linux"
+    
+
