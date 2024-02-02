@@ -2,7 +2,13 @@ var express = require('express');
 var proceso = require('../controllers/procesaimagen');
 var api = express.Router();
 
-api.get('/', proceso.getProperties);
+var multipart = require('connect-multiparty');
+var multipartyPath = multipart({ uploadDir: './uploads/procesaimagenes'} );
+
+
+
+api.get('/', proceso.getProperties)
+    .post('/',multipartyPath,proceso.getProperties);
 
 //Ejemplo
 // api

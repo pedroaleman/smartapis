@@ -1,4 +1,9 @@
 Libreria
     > npm install @tensorflow/tfjs-node
     > npm i @tensorflow/tfjs
+    > npm i @tensorflow/tfjs-node-gpu  //NO SE USÓ
+    > npm i @tensorflow/tfjs-core
+    > npm i @tensorflow/tfjs-converter
+    > npm i @tensorflow-models/mobilenet
+
 
