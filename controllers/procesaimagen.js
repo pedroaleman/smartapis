@@ -1,6 +1,7 @@
 const generic = require('../shared/generic');
 const googleService = require('../services/googleApiService')
 const tensorService = require('../services/tensorFlowService');
+const fs = require('fs');
 
 
 async function getProperties(req, res){
@@ -10,6 +11,27 @@ async function getProperties(req, res){
   //const fileName = './images/sorentolateral.jpg';
   //const fileName = './images/300653.png';
   //const fileName = './images/camionbasura.jpeg';
+
+      const llaveEsperada = 'JNV9pK3em1YCS16CzFUOdO7fVG3RkO0IrTzeOJ48yFI=';
+      const llaveRecibida = req.headers['llave'];
+      if(llaveRecibida == null || llaveRecibida === undefined){
+        console.log('Debe enviar la llave de autorización: ')
+        res.status(401).send({success: false, message: 'Debe enviar la llave de autorización: '});
+        return;
+      }
+      else{
+        if(llaveEsperada != llaveRecibida){
+          console.log('Llave incorrecta: ')
+          res.status(401).send({success: false, message: 'Llave incorrecta'});
+          return;
+        }
+      }
+
+
+      console.log('llaveRecibida: ', llaveRecibida)
+
+
+
 
       let clase = null;
 
@@ -88,7 +110,18 @@ async function getProperties(req, res){
 
             //Obtener la placa
             vehiculo.placa = await ObtienePlaca(sinAcentos,imagen_path);
+
+            //Eliminar archivo al final de usarlo
+            // Verificar si el archivo existe antes de intentar eliminarlo
+            if (fs.existsSync(imagen_path)) {
+              fs.unlinkSync(imagen_path);
+            }
+            
+
         }
+
+
+
 
         //console.log('sinAcentos: ',sinAcentos)
         let obj = {success: true, message: 'Proceso Terminado',objects: sinAcentos, vehiculo: vehiculo,clase: clase};

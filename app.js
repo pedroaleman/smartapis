@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const bodyparser = require('body-parser');
 require('dotenv').config();
 
@@ -10,6 +11,16 @@ app.use(bodyparser.urlencoded({extended: false}));
 app.use(bodyparser.json());
 
 
+// Configurar opciones de CORS
+const opcionesCors = {
+    origin: ['http://localhost:7221', 'https://www.paytam.com.mx'],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true, // Habilitar cookies en las solicitudes CORS
+    optionsSuccessStatus: 204, // Cambiar el código de respuesta para las opciones preflight a 204
+  };
+  
+  // Aplicar el middleware CORS
+  app.use(cors(opcionesCors));
 
 
 //app.use("/processimage", apiRoute);
