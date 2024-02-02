@@ -87,7 +87,7 @@ async function getProperties(req, res){
             vehiculo.color = nombreColor;
 
             //Obtener la placa
-            vehiculo.placa = await ObtienePlaca(sinAcentos);
+            vehiculo.placa = await ObtienePlaca(sinAcentos,imagen_path);
         }
 
         //console.log('sinAcentos: ',sinAcentos)
@@ -105,7 +105,7 @@ async function getProperties(req, res){
 
 
 //#region Funciones locales
-async function ObtienePlaca(texto){
+async function ObtienePlaca(texto,imagen_path){
     let placa = null;
     const arrPlaca = ["matricula", "placa"];
     const coincidenciasPlaca = generic.encontrarValoresEnCadena(texto, arrPlaca);
