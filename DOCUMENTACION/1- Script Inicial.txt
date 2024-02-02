@@ -1,0 +1,47 @@
+* Crear proyecto inicial (Abrir terminal)
+    > npm init
+    
+* Instalar paquetes para node.js con npm
+	> npm i express cors bcrypt-nodejs body-parser connect-multiparty jsonwebtoken jwt-simple moment --save
+	> npm i nodemon --save-dev
+    
+    --Instalar google visión
+        > npm install @google-cloud/vision
+    
+    --Para pintar colores en la consola, spinners, etc
+        > npm i ora chalk mime-db -save
+
+    --Para traducciones con google
+        npm install @vitalets/google-translate-api          ***NO LO USE AUN
+
+    --Instalar Chat GPT 3.5
+        > npm install openai
+
+
+
+* Actualizar dependencias
+	> npm update
+
+
+* Se modifica el package.json para que arranque el nodemon:
+	"start": "nodemon app.js"
+		--**Va dentro de Scripts, se borra el nodo Test
+
+
+* Para arrancar el node, con el nodemon escuchando cambios:
+	npm start
+
+
+
+VARIABLES DE ENTORNO:
+----------------------------------------------------
+Url:	https://www.youtube.com/watch?v=jywsdGzwcyg&list=PLPl81lqbj-4IEnmCXEJeEXPepr8gWtsl6&index=15
+
+Instalar el paquete:	
+    > npm i dotenv
+
+--En el app.js
+require('dotenv').config();
+
+--Se creo el archivo .env
+--Se agregó el .env al .gitignore

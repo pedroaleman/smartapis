@@ -1,8 +1,7 @@
 const generic = require('../shared/generic');
 const googleService = require('../services/googleApiService')
 const tensorService = require('../services/tensorFlowService');
-const tf = require("@tensorflow/tfjs")
-require('@tensorflow/tfjs-node')
+
 
 async function getProperties(req, res){
   const fileName = './images/SorentoFrente.jpg';
@@ -13,8 +12,7 @@ async function getProperties(req, res){
     try {
       tensorService.classifyImage(fileName);
 
-      console.log("TensorFlow.js version: ", tf.version.tfjs);
-
+      
 
 
 

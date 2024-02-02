@@ -14,6 +14,8 @@ async function loadMobilenetModel() {
 
   async function classifyImage(imagePath) {
     console.log('Entra a clasificar...', imagePath)
+    console.log("TensorFlow.js version: ", tf.version.tfjs);
+
 
     const mobilenet = await loadMobilenetModel();
   
